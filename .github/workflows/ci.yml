@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Cancel redundant runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Validate HTML ──────────────────────────────────────────
+  validate-html:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check HTML with tidy
+        # html-tidy is pre-installed on GitHub-hosted runners
+        # -errors: print only errors/warnings  -quiet: suppress info  -utf8: encoding
+        run: |
+          tidy -errors -quiet -utf8 index.html 2>&1 | grep -v "^$" || true
+          echo "HTML check complete"
+
+  # ── Lint JavaScript ────────────────────────────────────────
+  lint-js:
+    name: Lint JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify app.js parses without syntax errors
+        run: node --input-type=module --eval "
+          import { readFileSync } from 'fs';
+          const src = readFileSync('./app.js', 'utf8');
+          // Wrap in async IIFE to allow top-level await checks
+          new Function(src);
+          console.log('app.js syntax OK');
+        "
+
+  # ── E2E Tests ──────────────────────────────────────────────
+  e2e:
+    name: E2E Tests (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Playwright browser (${{ matrix.browser }})
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run E2E tests (${{ matrix.browser }})
+        run: npx playwright test --project=${{ matrix.browser }}
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload test screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 7

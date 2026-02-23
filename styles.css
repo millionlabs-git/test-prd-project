@@ -1,0 +1,54 @@
+/* ============================================================
+   styles.css — Custom CSS for Todo App
+   Supplements Tailwind CDN utility classes.
+   ============================================================ */
+
+/* ── Input error state (validation feedback) ─────────────── */
+.input-error {
+  border-color: #ef4444 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+  animation: shake 0.45s ease-in-out;
+}
+
+@keyframes shake {
+  0%,  100% { transform: translateX(0); }
+  15%        { transform: translateX(-6px); }
+  30%        { transform: translateX(6px); }
+  45%        { transform: translateX(-4px); }
+  60%        { transform: translateX(4px); }
+  75%        { transform: translateX(-2px); }
+  90%        { transform: translateX(2px); }
+}
+
+/* ── Todo item entry animation ───────────────────────────── */
+.todo-item {
+  animation: fadeSlideIn 0.2s ease-out both;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Empty-state placeholder ─────────────────────────────── */
+.todo-placeholder {
+  list-style: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Reduced-motion: disable all animations & transitions ── */
+@media (prefers-reduced-motion: reduce) {
+  .todo-item,
+  .input-error {
+    animation: none;
+    transition: none;
+  }
+}

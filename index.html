@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen bg-gray-100 flex items-start justify-center pt-12 px-4">
+
+  <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
+
+    <!-- Header -->
+    <h1 class="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-2">
+      <span aria-hidden="true">📝</span> Todo List
+    </h1>
+
+    <!-- Add-todo row -->
+    <div class="flex gap-3 mb-8">
+      <input
+        id="todo-input"
+        type="text"
+        placeholder="What needs to be done?"
+        autocomplete="off"
+        class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-700
+               focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      />
+      <button
+        id="add-btn"
+        class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700
+               text-white font-semibold px-6 py-2.5 rounded-lg transition"
+      >
+        Add
+      </button>
+    </div>
+
+    <!-- Todo list (populated by TodoRenderer) -->
+    <ul id="todo-list" class="space-y-2"></ul>
+
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
