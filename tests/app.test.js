@@ -30,6 +30,8 @@ vi.mock('../js/todoManager.js', async () => {
     init: vi.fn(),
     addTodo: vi.fn(() => []),
     getSortedTodos: vi.fn(() => []),
+    toggleTodo: vi.fn(() => []),
+    deleteTodo: vi.fn(() => []),
   };
 });
 
@@ -44,6 +46,8 @@ import {
   init,
   addTodo,
   getSortedTodos,
+  toggleTodo,
+  deleteTodo,
   ValidationError,
 } from '../js/todoManager.js';
 
@@ -74,8 +78,40 @@ function clearMockCalls() {
   init.mockClear();
   addTodo.mockClear();
   getSortedTodos.mockClear();
+  toggleTodo.mockClear();
+  deleteTodo.mockClear();
   renderTodos.mockClear();
   clearInput.mockClear();
+}
+
+/**
+ * Build a minimal todo <li> element matching the structure produced by
+ * uiRenderer.buildTodoElement(), so delegated-listener tests can simulate
+ * real user interactions without depending on the renderer.
+ *
+ * @param {{ id: string, completed?: boolean, text?: string }} opts
+ * @returns {HTMLLIElement}
+ */
+function buildFakeTodoLi({ id, completed = false, text = 'Test todo' }) {
+  const li = document.createElement('li');
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = completed;
+  checkbox.dataset.id = id;
+
+  const span = document.createElement('span');
+  span.textContent = text;
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.dataset.id = id;
+  deleteBtn.dataset.action = 'delete';
+  deleteBtn.textContent = '✕';
+
+  li.appendChild(checkbox);
+  li.appendChild(span);
+  li.appendChild(deleteBtn);
+  return li;
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -404,6 +440,202 @@ describe('app.js — Core Wiring (Init + Add)', () => {
     it('does not throw during bootstrap when #add-btn is absent', () => {
       document.body.innerHTML = `<input id="new-todo-input" type="text" />`;
 
+      expect(() => bootApp()).not.toThrow();
+    });
+  });
+});
+
+// ─── Event Delegation — Toggle & Delete ──────────────────────────────────────
+
+describe('app.js — Event Delegation (Toggle & Delete)', () => {
+  let todoList;
+
+  beforeEach(() => {
+    setupDOM();
+    bootApp();
+    clearMockCalls();
+
+    todoList = document.getElementById('todo-list');
+    // Default mock return values for action handlers.
+    toggleTodo.mockReturnValue([]);
+    deleteTodo.mockReturnValue([]);
+  });
+
+  // ── Checkbox / toggle ──────────────────────────────────────────────────────
+
+  describe('checkbox click — toggleTodo', () => {
+    it('calls toggleTodo() with the todo id when a checkbox is clicked', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'abc-1' }));
+      const checkbox = todoList.querySelector('input[type="checkbox"]');
+      checkbox.click();
+
+      expect(toggleTodo).toHaveBeenCalledOnce();
+      expect(toggleTodo).toHaveBeenCalledWith('abc-1');
+    });
+
+    it('calls renderTodos() with the list returned by toggleTodo()', () => {
+      const updated = [
+        { id: 'abc-1', text: 'Test todo', completed: true, createdAt: 1000 },
+      ];
+      toggleTodo.mockReturnValue(updated);
+
+      todoList.appendChild(buildFakeTodoLi({ id: 'abc-1' }));
+      todoList.querySelector('input[type="checkbox"]').click();
+
+      expect(renderTodos).toHaveBeenCalledOnce();
+      expect(renderTodos).toHaveBeenCalledWith(updated);
+    });
+
+    it('does NOT call deleteTodo() when a checkbox is clicked', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'abc-1' }));
+      todoList.querySelector('input[type="checkbox"]').click();
+
+      expect(deleteTodo).not.toHaveBeenCalled();
+    });
+
+    it('toggles an already-completed todo (un-complete path)', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'abc-2', completed: true }));
+      const checkbox = todoList.querySelector('input[type="checkbox"]');
+      checkbox.click();
+
+      expect(toggleTodo).toHaveBeenCalledWith('abc-2');
+    });
+
+    it('toggles the correct todo when multiple items are in the list', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'first' }));
+      todoList.appendChild(buildFakeTodoLi({ id: 'second' }));
+
+      const checkboxes = todoList.querySelectorAll('input[type="checkbox"]');
+      checkboxes[1].click(); // click the second one
+
+      expect(toggleTodo).toHaveBeenCalledWith('second');
+      expect(toggleTodo).not.toHaveBeenCalledWith('first');
+    });
+
+    it('does nothing when a checkbox with no data-id is clicked', () => {
+      // Rogue checkbox without a data-id.
+      const rogue = document.createElement('input');
+      rogue.type = 'checkbox';
+      todoList.appendChild(rogue);
+      rogue.click();
+
+      expect(toggleTodo).not.toHaveBeenCalled();
+      expect(renderTodos).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Delete button ──────────────────────────────────────────────────────────
+
+  describe('delete button click — deleteTodo', () => {
+    it('calls deleteTodo() with the todo id when the delete button is clicked', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'xyz-9' }));
+      const btn = todoList.querySelector('[data-action="delete"]');
+      btn.click();
+
+      expect(deleteTodo).toHaveBeenCalledOnce();
+      expect(deleteTodo).toHaveBeenCalledWith('xyz-9');
+    });
+
+    it('calls renderTodos() with the list returned by deleteTodo()', () => {
+      const afterDelete = [
+        { id: 'xyz-10', text: 'Remaining', completed: false, createdAt: 2000 },
+      ];
+      deleteTodo.mockReturnValue(afterDelete);
+
+      todoList.appendChild(buildFakeTodoLi({ id: 'xyz-9' }));
+      todoList.querySelector('[data-action="delete"]').click();
+
+      expect(renderTodos).toHaveBeenCalledWith(afterDelete);
+    });
+
+    it('does NOT call toggleTodo() when a delete button is clicked', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'xyz-9' }));
+      todoList.querySelector('[data-action="delete"]').click();
+
+      expect(toggleTodo).not.toHaveBeenCalled();
+    });
+
+    it('deletes the correct todo when multiple items are in the list', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'item-a' }));
+      todoList.appendChild(buildFakeTodoLi({ id: 'item-b' }));
+
+      const buttons = todoList.querySelectorAll('[data-action="delete"]');
+      buttons[0].click(); // click the first delete button
+
+      expect(deleteTodo).toHaveBeenCalledWith('item-a');
+      expect(deleteTodo).not.toHaveBeenCalledWith('item-b');
+    });
+
+    it('handles a click on a child element inside the delete button via closest()', () => {
+      // Simulate a button that contains an inner <span> (child element).
+      const li = buildFakeTodoLi({ id: 'nested-1' });
+      const btn = li.querySelector('[data-action="delete"]');
+      const innerIcon = document.createElement('span');
+      innerIcon.textContent = '×';
+      btn.appendChild(innerIcon);
+      todoList.appendChild(li);
+
+      // Click the inner <span>, not the button itself.
+      innerIcon.click();
+
+      expect(deleteTodo).toHaveBeenCalledWith('nested-1');
+    });
+  });
+
+  // ── Neutral clicks (no action taken) ──────────────────────────────────────
+
+  describe('neutral clicks — no action', () => {
+    it('does not call toggleTodo() or deleteTodo() when clicking the list container', () => {
+      todoList.click();
+
+      expect(toggleTodo).not.toHaveBeenCalled();
+      expect(deleteTodo).not.toHaveBeenCalled();
+    });
+
+    it('does not call toggleTodo() or deleteTodo() when clicking a text span', () => {
+      todoList.appendChild(buildFakeTodoLi({ id: 'span-test' }));
+      const span = todoList.querySelector('span');
+      span.click();
+
+      expect(toggleTodo).not.toHaveBeenCalled();
+      expect(deleteTodo).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Listener survives re-renders ───────────────────────────────────────────
+
+  describe('listener survives re-renders', () => {
+    it('still handles toggle after renderTodos replaces #todo-list children', () => {
+      // Simulate an initial add that triggers a full re-render.
+      todoList.innerHTML = ''; // wipe
+      todoList.appendChild(buildFakeTodoLi({ id: 're-render-1' }));
+
+      // Click the checkbox in the freshly rendered content.
+      todoList.querySelector('input[type="checkbox"]').click();
+
+      expect(toggleTodo).toHaveBeenCalledWith('re-render-1');
+    });
+
+    it('still handles delete after renderTodos replaces #todo-list children', () => {
+      // Simulate re-render by replacing innerHTML.
+      todoList.innerHTML = '';
+      todoList.appendChild(buildFakeTodoLi({ id: 're-render-2' }));
+
+      todoList.querySelector('[data-action="delete"]').click();
+
+      expect(deleteTodo).toHaveBeenCalledWith('re-render-2');
+    });
+  });
+
+  // ── Graceful degradation ───────────────────────────────────────────────────
+
+  describe('graceful degradation', () => {
+    it('does not throw during bootstrap when #todo-list is absent', () => {
+      document.body.innerHTML = `
+        <input id="new-todo-input" type="text" />
+        <button id="add-btn">Add</button>
+      `;
+      // No #todo-list — bootstrap should guard and not throw.
       expect(() => bootApp()).not.toThrow();
     });
   });

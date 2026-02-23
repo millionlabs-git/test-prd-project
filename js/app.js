@@ -2,13 +2,17 @@
  * @fileoverview app.js — Application entry point.
  *
  * Task 7: Core Wiring (Init + Add)
+ * Task 8: Event Delegation — Toggle & Delete
  *
  * Orchestrates app startup: initialises state from storage, renders the
  * initial todo list, and wires the "Add" button and Enter-key to create new
- * todos. Contains no business logic and no direct localStorage access.
+ * todos. Attaches a single delegated click listener to #todo-list to handle
+ * toggle and delete actions without re-registering after re-renders.
+ *
+ * Contains no business logic and no direct localStorage access.
  *
  * Error handling at this stage:
- *   - ValidationError → console.warn  (full UI feedback added in Task 8)
+ *   - ValidationError → console.warn  (full UI feedback added in Task 9)
  *   - Storage errors  → console.error (full UI feedback added in Task 9)
  */
 
@@ -16,6 +20,8 @@ import {
   init,
   addTodo,
   getSortedTodos,
+  toggleTodo,
+  deleteTodo,
   ValidationError,
 } from './todoManager.js';
 import { renderTodos, clearInput } from './uiRenderer.js';
@@ -49,6 +55,47 @@ function handleAdd() {
   }
 }
 
+// ─── Delegated list action handler ───────────────────────────────────────────
+
+/**
+ * Single delegated click handler attached to #todo-list.
+ *
+ * Inspects the click target to determine which action to take:
+ *   - Checkbox with data-id  → toggleTodo(id) + re-render
+ *   - [data-action="delete"] → deleteTodo(id) + re-render
+ *
+ * Using closest('[data-id]') on the delete path lets clicks on any child
+ * element inside the button still resolve to the correct todo id.
+ *
+ * This listener is attached exactly once at bootstrap and continues to work
+ * correctly after full re-renders because it is registered on the stable
+ * #todo-list container, not on individual child elements.
+ *
+ * @param {MouseEvent} event
+ */
+function handleListClick(event) {
+  const target = event.target;
+
+  // ── Checkbox toggle ────────────────────────────────────────────────────────
+  if (
+    target instanceof HTMLInputElement &&
+    target.type === 'checkbox' &&
+    target.dataset.id
+  ) {
+    const sorted = toggleTodo(target.dataset.id);
+    renderTodos(sorted);
+    return;
+  }
+
+  // ── Delete button ──────────────────────────────────────────────────────────
+  // Use closest() so that clicks on child elements of the button still work.
+  const deleteEl = target.closest('[data-action="delete"]');
+  if (deleteEl && deleteEl.dataset.id) {
+    const sorted = deleteTodo(deleteEl.dataset.id);
+    renderTodos(sorted);
+  }
+}
+
 // ─── Bootstrapping ────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -68,5 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
     inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') handleAdd();
     });
+  }
+
+  // Delegated listener for toggle and delete — attached once to the stable
+  // #todo-list container so it survives full re-renders of its children.
+  const todoList = document.getElementById('todo-list');
+  if (todoList) {
+    todoList.addEventListener('click', handleListClick);
   }
 });
