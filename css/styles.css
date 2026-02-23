@@ -34,10 +34,29 @@ body {
 }
 
 /* ─── Completed-text strikethrough with smooth transition ────────────────────── */
+
+/**
+ * Fades the strikethrough line in from transparent → visible so the
+ * decoration colour animates independently of the text colour.
+ * text-decoration-color is a colour value and is fully animatable.
+ */
+@keyframes strikethrough {
+  from {
+    text-decoration-color: transparent;
+  }
+  to {
+    text-decoration-color: #9ca3af;
+  }
+}
+
 .completed-text {
   text-decoration: line-through;
-  color: #9ca3af;
-  transition: color 0.15s ease;
+  text-decoration-color: #9ca3af !important; /* final resting colour of the strike line */
+  color: #9ca3af !important;
+  /* Transition the text colour and the decoration colour for full smoothness */
+  transition: color 0.3s ease, text-decoration-color 0.3s ease;
+  /* Animate the strikethrough line from invisible → visible on class application */
+  animation: strikethrough 0.3s ease-out forwards;
 }
 
 /* ─── Storage error message ─────────────────────────────────────────────────── */
