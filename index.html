@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="bg-gray-100 min-h-screen flex items-start justify-center pt-16 px-4">
+    <div class="w-full max-w-lg">
+      <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">My Todos</h1>
+
+      <div class="bg-white rounded-xl shadow-md p-6">
+        <!-- Input row -->
+        <div class="flex gap-2 mb-4">
+          <input
+            type="text"
+            id="new-todo-input"
+            placeholder="What needs to be done?"
+            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            id="add-btn"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
+          >
+            Add
+          </button>
+        </div>
+
+        <!-- Storage error container -->
+        <div id="storage-error-container"></div>
+
+        <!-- Todo list -->
+        <ul id="todo-list" class="space-y-2"></ul>
+      </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

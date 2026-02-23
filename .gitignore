@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Test coverage output
+coverage/
+.nyc_output/
+
+# Local environment overrides
+*.local
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
