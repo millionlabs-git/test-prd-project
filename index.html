@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Todos</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom styles (transitions, strikethrough fallback, scrollbar) -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Application logic (deferred so DOM is ready on execution) -->
+    <script src="app.js" defer></script>
+  </head>
+
+  <body class="min-h-screen bg-gray-100 flex items-center justify-center">
+
+    <!-- App container: centered white card -->
+    <div id="app" class="w-full max-w-xl bg-white rounded-2xl shadow-lg p-6">
+
+      <!-- Page title -->
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">My Todos</h1>
+
+      <!-- Input row: text field + Add button -->
+      <div class="flex gap-2 mb-4">
+        <input
+          id="todo-input"
+          type="text"
+          placeholder="What needs to be done?"
+          aria-label="New todo text"
+          class="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          id="add-btn"
+          class="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition"
+        >
+          Add
+        </button>
+      </div>
+
+      <!-- Todo list: populated entirely by app.js at runtime -->
+      <ul id="todo-list" class="divide-y divide-gray-100">
+        <!-- Items injected here by render() -->
+      </ul>
+
+    </div><!-- /#app -->
+
+  </body>
+</html>

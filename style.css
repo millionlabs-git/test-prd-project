@@ -1,0 +1,75 @@
+/* ============================================================
+   style.css — Supplemental styles for My Todos
+   Tailwind CDN covers the majority of styling.
+   This file handles: entrance/exit transitions, strikethrough
+   fallback, and optional scrollbar customisation.
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   Todo item entrance animation
+   Applied one requestAnimationFrame after <li> insertion so
+   the browser registers the initial opacity: 0 before the
+   class triggers the transition to opacity: 1.
+   ------------------------------------------------------------ */
+.todo-item-enter {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease-in, transform 200ms ease-out;
+}
+
+/* Initial (pre-enter) state — set directly on the element
+   before the class is applied by requestAnimationFrame. */
+.todo-item-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+
+/* ------------------------------------------------------------
+   Todo item exit animation
+   Applied by app.js before removing the element from the DOM.
+   ------------------------------------------------------------ */
+.todo-item-leave {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+
+/* ------------------------------------------------------------
+   Completed todo text — strikethrough fallback
+   Tailwind's `line-through` utility class is also applied
+   directly in createTodoElement(); this class serves as a
+   plain-CSS fallback in case the CDN is unavailable.
+   ------------------------------------------------------------ */
+.completed-text {
+  text-decoration: line-through;
+  color: #9ca3af; /* Tailwind gray-400 equivalent */
+}
+
+
+/* ------------------------------------------------------------
+   Scrollbar styling for the todo list container
+   Applies in Chrome/Edge/Safari (WebKit). Firefox uses the
+   standard scrollbar-width / scrollbar-color properties.
+   ------------------------------------------------------------ */
+#todo-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent; /* thumb: gray-300, track: transparent */
+}
+
+#todo-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#todo-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#todo-list::-webkit-scrollbar-thumb {
+  background-color: #d1d5db; /* gray-300 */
+  border-radius: 9999px;
+}
